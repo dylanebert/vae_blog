@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>Dylan Ebert</title>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+	<link rel="icon" href="favicon.ico">
+</head>
+<style>
+@media (min-width: 48em) {
+  html {
+    font-size: 18px;
+  }
+}
+body {
+  font-family: 'Open Sans', sans-serif;
+  color: #555;
+}
+
+h1, h2, h3, h4, h5, h7 {
+  color: #333;
+}
+
+.container {
+  max-width: 60rem;
+}
+
+.blog-header {
+  margin-bottom: 3rem;
+  background-color: #eee;
+  box-shadow: inset 0 -.1rem .25rem rgba(0,0,0,.1)
+  padding-bottom: 1.25rem;
+}
+
+.sidebar-module {
+  padding: 1rem;
+}
+
+.sidebar-module-inset {
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: .25rem;
+}
+
+.blog-post {
+  margin-bottom: 4rem;
+}
+
+.blog-post-title {
+  margin-bottom: .25rem;
+  font-size: 2.5rem;
+}
+
+.blog-post-meta {
+  margin-bottom: 1.25rem;
+  color: #999;
+}
+
+.img-container {
+	display: block;
+	margin: auto;
+	text-align: center;
+}
+</style>
+<body>
+<div class="blog-header">
+  <div class="container">
+    <h1 class="blog-title">A visually-grounded language representation</h1>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-8 blog-main">
+      <div class="blog-post">
+        <h2 class="blog-post-title">Beginnings</h2>
+        <p class="blog-post-meta">09 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
+
+        <h4>The current state-of-the-art</h4>
+        <p>NLP has recently shifted toward <a href="https://en.wikipedia.org/wiki/Word2vec">Word2vec</a> models and word embeddings,
+        which encode words as large vectors that capture the relationships between words.</p>
+        <p><a href="http://commonweb.unifr.ch/artsdean/pub/gestens/f/as/files/4610/9778_083247.pdf">Rosch's work on categorization</a>
+          states two general and basic principles for the formation of categories in language: first, <i>cognitive economy</i>, which is to
+          capture as much information as possible in as little space as possible. Second is <i>perceived world structure</i>, which is the
+          correlational relationships between perceived entities.</p>
+        <p>Word embeddings do well to capture the relationships between words - semantically similar words will have close-together vectors.
+        This does well for tasks like inference and entailment. However, this knowledge representation only considers the relationship between words,
+        with no consideration for the real world. Complete different models are used for tasks like image tagging.</p>
+        <h4>Variational autoencoders</h4>
+        <p><a href="http://kvfrans.com/variational-autoencoders-explained/">Variational autoencoders</a> consist of two neural networks: an encoder and decoder network, to learn to encode and decode information
+        to and from a low-dimensional latent space. KL-divergence is used to coerce the latent space to conform to a normal distribution.</p>
+				<div class="img-container">
+					<img src="vae_figure.jpg" style="max-width: 75%;">
+				</div>
+        <p>VAEs are typically used in graphics, but we're interested in how it may apply to NLP. Looking back at the principle of <i>cognitive economy</i>,
+        autoencoders condense large amounts of visual information into a small space. But, before humans begin assigning categories to the world, they
+        process and organize visual information. For example, <a href="https://news.stanford.edu/news/2012/december/infants-process-faces-121112.html">babies
+          learn to recognize human faces before object/word associations</a>.</p>
+        <p>To investigate how VAEs can be used for language representation, we've train a VAE on the <a href="http://vision.cs.utexas.edu/projects/finegrained/utzap50k/">
+          UT Zappos50K shoe dataset</a>, which contains over 50,000 catalog images of shoes. Below shoes the 2d shoe manifold. Each image on the space below corresponds
+          to the output image from sampling that point on the space.</p>
+				<div class="img-container">
+        	<img src="shoe_manifold.png" style="max-width: 75%; padding: 1rem;">
+				</div>
+        <p>This manifold is constructed <i>before</i> any linguistic information is presented - we've only dealt with raw image data so far. This is as if,
+        in a world consisting of only shoe images, we've seen and processed 40,000 such shoes, mentally organizing what we've seen, without yet categorizing them.
+        Now, let's assume that someone shown us 10,000 more shoes, and told us what category each of these belong to. Below shoes the encoding of each of these
+        10,000 test-set shoes on the same 2d manifold, colored by which category we're told they belong to.</p>
+				<div class="img-container">
+					<img src="plot.png" style="max-width: 75%; padding: 1rem;">
+				</div>
+				<p>Now, before considering what we can do with this information, let's define tasks we want to use this representation to do:</p>
+				<ul>
+					<li>
+						<b>Grounding: </b>Connecting language to the real world.
+						<ul>
+							<li>Image tagging: Given an image, which tags best describe this image?</li>
+						</ul>
+					</li>
+					<li>
+						<b>Inference: </b>Understanding the relationships and structure in language.
+						<ul>
+							<li>How similar are these two given words/categories?</li>
+							<li>Does one statement entail another?</li>
+						</ul>
+					</li>
+					<li>
+						<b>Conceptualization: </b>Inferring a world given language.
+						<ul>
+							<li>Given a statement, generate an image.</li>
+						</ul>
+					</li>
+				</ul>
+				<p>How to approach these problems with this VAE-based knowledge representation, and what advantages it may have over word embeddings,
+				remain to be explored.</p>
+				<p>Thanks for reading!</p>
+      </div>
+    </div>
+    <div class="col-sm-3 offset-sm-1 blog-sidebar">
+      <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>This work is on the use of a visually-grounded representation of language in NLP, conducted by
+          <a href="http://dylanebert.de">Dylan Ebert</a> at the Brown NLU lab led by <a href="http://cs.brown.edu/people/epavlick/">Ellie Pavlick</a>.
+          All code is hosted <a href="https://github.com/dylanebert/vae">here on GitHub</a>.
+        </p>
+      </div>
+      <!--<div class="sidebar-module">
+        <h4>Previous Posts</h4>
+        <ol class="list-unstyled">
+          <li><a href="#">May 2018</a></li>
+        </ol>
+      </div>-->
+    </div>
+  </div>
+</div>
+</body>
+</html>
