@@ -59,10 +59,15 @@ h1, h2, h3, h4, h5, h7 {
   color: #999;
 }
 
-.img-container {
+.figure {
 	display: block;
 	margin: auto;
 	text-align: center;
+	padding: 1rem;
+}
+
+.figure-caption {
+	font-weight: bold;
 }
 </style>
 <body>
@@ -74,10 +79,87 @@ h1, h2, h3, h4, h5, h7 {
 <div class="container">
   <div class="row">
     <div class="col-sm-8 blog-main">
+			<div class="blog-post">
+				<h2 class="blog-post-title">Theoretical Foundations</h2>
+				<p class="blog-post-meta">18 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
+				<h4>Base Assumptions</h4>
+				<p>First and foremost, we must establish common ground on the foundational goals of semantic models in NLP. The figure below
+					describes language in its simplest terms: the mapping between strings (units of meaning, e.g. words) and the world. NLP
+					models use some knowledge representation to encode the world, as well as some interpretation function to map between strings
+					and the provided knowledge representation.</p>
+				<figure class="figure">
+					<img src="string_world_figure.png" style="width: 75%;">
+					<figcaption class="figure-caption">Theoretical foundations of language and NLP</figcaption>
+				</figure>
+				<p>Built upon this foundation, let's take a look at and compare existing models in linguistics and NLP.
+					The table below lays out the models that will be discussed, as a reference for the elaboration to follow.</p>
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th scope="col">Knowledge representation</th>
+							<th scope="col">Interpretation function</th>
+							<th scope="col">Entailment</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row">Set theory</th>
+							<td>Pointer to set</td>
+							<td>Subsets</td>
+						</tr>
+						<tr>
+							<th scope="row">Distributional semantics</th>
+							<td>Various (word2vec, skipgrams)</td>
+							<td>Cosine similarity</td>
+						</tr>
+						<tr>
+							<th scope="row">Variational autoencoder</th>
+							<td>Latent vector encoder</td>
+							<td>Vector distance</td>
+						</tr>
+					</tbody>
+				</table>
+				<h4>Set theory</h4>
+				<p>Set theory, or <a href="https://plato.stanford.edu/entries/montague-semantics/">Montague Semantics</a>, is a lingusitics model based on
+					set theory in mathematics. It defines each category as the set of all possible instances of that category. Therefore, the world is represented by
+					sets, and the interpretation function for each string is a pointer to the corresonding set. For example, the string "bird" would point to
+					the set of all birds, as shown below.</p>
+				<figure class="figure">
+					<img src="montague1.png" style="width: 75%;">
+					<figcaption class="figure-caption">Set theory interpretation function</figcaption>
+				</figure>
+				<p>Entailment is defined by subsets. For example, if the set representing "blue bird" is a subset of that representing "bird",
+					then "bird" semantically entails "blue bird". This framework has been largely confined to linguistic theory, without much practical application in NLP.
+					However, <a href="http://aclweb.org/anthology/Q14-1006">Young et al. from 2014</a> introduces a <i>denotation graph</i>: a graph constructed
+					from crowdsourced image descriptions that provide a computational knowledge representation of language following the principles of Montague semantics.</p>
+				<p>This model contrasts with <a href="http://commonweb.unifr.ch/artsdean/pub/gestens/f/as/files/4610/9778_083247.pdf">Rosch's work on categorization</a>
+					mentioned in the previous post, which considers each category as having a "prototype" - the <i>best</i> representation of a class. In set theory,
+					every example either is or isn't a member of a set (e.g. a penguin is just as much a bird as a robin). This contrasts with human cognition, in which
+					people will commonly characterize a robin as a <i>better</i> example of a bird than a penguin, despite agreeing that they are both technically birds.</p>
+				<h4>Distributional semantics</h4>
+				<p>Distributional semantics, or <a href="https://jair.org/index.php/jair/article/view/10640">vector space models</a>, encode strings as high-dimensional
+					vectors, in which contextually similar words are physically close together in the constructed vector space. This method is common in NLP, including
+					the long-commonplace <a href="https://en.wikipedia.org/wiki/Latent_semantic_analysis">Latent Semantic Analysis (LSA)</a> and recently more
+					popular <a href="https://en.wikipedia.org/wiki/Word2vec">Word2Vec deep learning models</a>.</p>
+				<p>The <a href="http://mccormickml.com/2016/04/19/word2vec-tutorial-the-skip-gram-model/">Skip-Gram model</a> artificially removes words from their
+					context and trains a neural network to predict the word based on that context. In doing so, if the words are initially treated as categorical one-hot
+					vector input, and the network consists of a single vocabulary-sized feed-forward layer, then the weights of this can be treated as a word vector lookup
+					table, which returns the vector corresponding to each word. Entailment is thus treated probabalistically, based on vector similarity measurements
+					such as cosine similarity.</p>
+				<p>This model lends itself more to human cognition and prototype theory. A robin may be considered a <i>better</i> bird than a penguin, if "robin" would be more
+					likely to appear in similar contexts to "bird" than would "penguin".</p>
+				<h4>Variational autoencoder</h4>
+				<p>The use of variational autoencoders to map strings to a low-dimensional image manifold, as described in the previous post, is the knowledge
+					representation proposed by this work. Using this method, the <i>world</i>, consisting of images, is mapped to a latent space using a variational
+					autoencoder, before any strings are considered. Strings are then interpreted as distributions across the latent space.</p>
+				<p>The interpretation function is thus the encoder network, which encodes strings as vectors on the latent space. This is related to distributional
+					semantics: in both models, strings are encoded as vectors. However, these encodings are based on strings' <i>visual grounding</i>, rather than
+					<i>context</i>. This is motivated by human cognition, by which the world is perceived before being categorized, and examples can vary by how <i>well</i>
+					they represent a category.</p>
+			</div>
       <div class="blog-post">
         <h2 class="blog-post-title">Beginnings</h2>
         <p class="blog-post-meta">09 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
-
         <h4>The current state-of-the-art</h4>
         <p>NLP has recently shifted toward <a href="https://en.wikipedia.org/wiki/Word2vec">Word2vec</a> models and word embeddings,
         which encode words as large vectors that capture the relationships between words.</p>
@@ -91,9 +173,9 @@ h1, h2, h3, h4, h5, h7 {
         <h4>Variational autoencoders</h4>
         <p><a href="http://kvfrans.com/variational-autoencoders-explained/">Variational autoencoders</a> consist of two neural networks: an encoder and decoder network, to learn to encode and decode information
         to and from a low-dimensional latent space. KL-divergence is used to coerce the latent space to conform to a normal distribution.</p>
-				<div class="img-container">
-					<img src="vae_figure.jpg" style="max-width: 75%;">
-				</div>
+				<figure class="figure">
+					<img src="vae_figure.jpg" style="width: 100%;">
+				</figure>
         <p>VAEs are typically used in graphics, but we're interested in how it may apply to NLP. Looking back at the principle of <i>cognitive economy</i>,
         autoencoders condense large amounts of visual information into a small space. But, before humans begin assigning categories to the world, they
         process and organize visual information. For example, <a href="https://news.stanford.edu/news/2012/december/infants-process-faces-121112.html">babies
@@ -101,16 +183,18 @@ h1, h2, h3, h4, h5, h7 {
         <p>To investigate how VAEs can be used for language representation, we've train a VAE on the <a href="http://vision.cs.utexas.edu/projects/finegrained/utzap50k/">
           UT Zappos50K shoe dataset</a>, which contains over 50,000 catalog images of shoes. Below shoes the 2d shoe manifold. Each image on the space below corresponds
           to the output image from sampling that point on the space.</p>
-				<div class="img-container">
-        	<img src="shoe_manifold.png" style="max-width: 75%; padding: 1rem;">
-				</div>
+				<figure class="figure">
+        	<img src="shoe_manifold.png" style="width: 75%;">
+					<figcaption class="figure-caption">2d image manifold for shoes</figcaption>
+				</figure>
         <p>This manifold is constructed <i>before</i> any linguistic information is presented - we've only dealt with raw image data so far. This is as if,
         in a world consisting of only shoe images, we've seen and processed 40,000 such shoes, mentally organizing what we've seen, without yet categorizing them.
         Now, let's assume that someone shown us 10,000 more shoes, and told us what category each of these belong to. Below shoes the encoding of each of these
         10,000 test-set shoes on the same 2d manifold, colored by which category we're told they belong to.</p>
-				<div class="img-container">
-					<img src="plot.png" style="max-width: 75%; padding: 1rem;">
-				</div>
+				<figure class="figure">
+					<img src="plot.png" style="width: 75%;">
+					<figcaption class="figure-caption">Shoe classes plotted on manifold</figcaption>
+				</figure>
 				<p>Now, before considering what we can do with this information, let's define tasks we want to use this representation to do:</p>
 				<ul>
 					<li>
