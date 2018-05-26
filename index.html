@@ -81,6 +81,64 @@ h1, h2, h3, h4, h5, h7 {
   <div class="row">
     <div class="col-sm-8 blog-main">
 			<div class="blog-post">
+				<h2 class="blog-post-title">Model Formalization</h2>
+				<p class="blog-post-meta">26 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
+				<h4>Classification model</h4>
+				<p>Let's lay out the formalization for the language grounding task of image classification: given an image, which tag/class best describes this image?
+					The first step is to train the VAE on images, before considering tags. We will call this task <b>pretraining</b>, and is how we will build the functions
+					used in next steps.</p>
+				<figure class="figure">
+					<img src="vae.png" style="width: 90%">
+					<figcaption class="figure-caption">Variational autoencoder definition</figcaption>
+				</figure>
+				<p>The figure above shows the VAE model, which is trained during pretraining. The encoder network takes image input $X$ and produces two n-dimensional vectors,
+					mean vector $z_\mu$ and standard deviation vector $z_\sigma$, from which latent vector $z$ is sampled as input to the decoder. The decoder
+					network takes input latent vector $z$ and produces reconstruction image $\overline{X}$. After training, we can treat $z_\mu$ as a encoder output $z$,
+					the one-to-one latent encoding of $X$.</p>
+				<p>Let $enc$ and $dec$ be functions corresponding to the pretrained encoder and decoder networks, such that $z=enc(X)$, the encoding of image $X$,
+					and $\overline{X}=dec(z)$, the decoding of latent vector $z$.</p>
+				<p>Now we can consider class labels. We will call the following model <b>class_means</b>. It is a simple instantiation of many unexplored possibilities for
+					a classification model built on a visually grounded vector space knowledge representation.</p>
+				<div class="panel panel-default" style="margin: 1rem;">
+					<div class="panel-heading">
+						<b>classification training definition</b>
+					</div>
+					<div class="panel-body">
+						<p><b>input:</b> images $[X]$, class labels $[c]$,</p>
+						<p><b>group</b> $[X]$ <b>by</b> $[c]$&ensp;$\rightarrow$&ensp;$\{X\}$</p>
+						<p><b>var</b> $\{z_\mu\}$<b>;</b></p>
+						<p><b>for</b> $[X_c]$ <b>in</b> $\{X\}$:</p>
+						<p>&emsp;$[z] = enc([X_c])$</p>
+						<p>&emsp;$\{z_\mu\}_c = \frac{1}{N}\sum_{i=0}^{N} [z]_i$</p>
+						<p><b>output:</b> class mean vectors $\{z_\mu\}$</p>
+					</div>
+					<div class="panel-footer">
+						<p>Given input images $X$ and corresponding class labels $c$, we group the images by unique class identifiers. Then, for each group,
+							we compute the mean latent vector encoding for that class. The output is a dictionary of mean latent vectors for each class.</p>
+					</div>
+				</div>
+				<div class="panel panel-default" style="margin: 1rem;">
+					<div class="panel-heading">
+						<b>classification evaluation definition</b>
+					</div>
+					<div class="panel-body">
+						<p><b>input:</b> images $[X]$, class mean vectors $\{z_\mu\}$</b></p>
+						<p><b>var</b> $[c]$<b>;</b></p>
+						<p><b>for</b> $[X]_i$ <b>in</b> $[X]$:</p>
+						<p>&emsp;$[\overline{X}]_i = dec(enc([X]_i))$
+						<p>&emsp;$[c]_i = argmin([cross\_entropy([\overline{X}]_i, dec(\{z_\mu\}_j))$ <b>for</b> $\{z_\mu\}_j)$ <b>in</b> $\{z_\mu\}])$</p>
+						<p><b>output:</b> predicted classes $[c]$</p>
+					</div>
+					<div class="panel-footer">
+						<p>Given input images $X$ and class mean vectors $\{z_\mu\}$, for each input image $[X]_i$, compute the encoding-decoding reconstruction
+							$[\overline{X}]_i$. Compute cross entropy between this reconstruction to the decoding of each mean vector $dec(\{z_\mu\}_j)$. Assign the
+							minimum as the predicted class.</p>
+					</div>
+				</div>
+				<p>Cross entropy between output image reconstructions is used as a similarity metric, rather than distance or cosine similarity between latent encodings,
+					in order to provide consistency in evaluation between this model and other baselines, described ahead.</p>
+			</div>
+			<div class="blog-post">
 				<h2 class="blog-post-title">Theoretical Foundations</h2>
 				<p class="blog-post-meta">18 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
 				<h4>Base Assumptions</h4>
@@ -152,7 +210,8 @@ h1, h2, h3, h4, h5, h7 {
 				<h4>Variational autoencoder</h4>
 				<p>The use of variational autoencoders to map strings to a low-dimensional image manifold, as described in the previous post, is the knowledge
 					representation proposed by this work. Using this method, the <i>world</i>, consisting of images, is mapped to a latent space using a variational
-					autoencoder, before any strings are considered. Strings are then interpreted as distributions across the latent space.</p>
+					autoencoder, before any strings are considered. Strings are then interpreted as distributions across the latent space. This may also be
+					considered a vector space model, as with distributional semantics, but one that is grounded visually rather than contextually.</p>
 				<p>The interpretation function is thus the encoder network, which encodes strings as vectors on the latent space. This is related to distributional
 					semantics: in both models, strings are encoded as vectors. However, these encodings are based on strings' <i>visual grounding</i>, rather than
 					<i>context</i>. This is motivated by human cognition, by which the world is perceived before being categorized, and examples can vary by how <i>well</i>
