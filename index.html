@@ -80,10 +80,13 @@ h1, h2, h3, h4, h5, h7 {
 <div class="container">
   <div class="row">
     <div class="col-sm-8 blog-main">
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
 			<div class="blog-post">
 				<h2 class="blog-post-title">Model Formalization</h2>
 				<p class="blog-post-meta">26 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
-				<h4>Classification model</h4>
+				<h4>Class_means model</h4>
 				<p>Let's lay out the formalization for the language grounding task of image classification: given an image, which tag/class best describes this image?
 					The first step is to train the VAE on images, before considering tags. We will call this task <b>pretraining</b>, and is how we will build the functions
 					used in next steps.</p>
@@ -101,43 +104,83 @@ h1, h2, h3, h4, h5, h7 {
 					a classification model built on a visually grounded vector space knowledge representation.</p>
 				<div class="panel panel-default" style="margin: 1rem;">
 					<div class="panel-heading">
-						<b>classification training definition</b>
+						<b>class_means training definition</b>
 					</div>
 					<div class="panel-body">
-						<p><b>input:</b> images $[X]$, class labels $[c]$,</p>
-						<p><b>group</b> $[X]$ <b>by</b> $[c]$&ensp;$\rightarrow$&ensp;$\{X\}$</p>
-						<p><b>var</b> $\{z_\mu\}$<b>;</b></p>
+						<p><b>input:</b> images $[X]$, class labels $[c]$</p>
+						<p><b>$\{X\}=$ group $[X]$ by $[c]$</b></p>
+						<p><b>var</b> $\{z\}$<b>;</b></p>
 						<p><b>for</b> $[X_c]$ <b>in</b> $\{X\}$:</p>
 						<p>&emsp;$[z] = enc([X_c])$</p>
-						<p>&emsp;$\{z_\mu\}_c = \frac{1}{N}\sum_{i=0}^{N} [z]_i$</p>
-						<p><b>output:</b> class mean vectors $\{z_\mu\}$</p>
+						<p>&emsp;$\{z\}_c = \frac{1}{N}\sum_{i=0}^{N} [z]_i$</p>
+						<p><b>output:</b> class mean vectors $\{z\}$</p>
 					</div>
 					<div class="panel-footer">
-						<p>Given input images $X$ and corresponding class labels $c$, we group the images by unique class identifiers. Then, for each group,
-							we compute the mean latent vector encoding for that class. The output is a dictionary of mean latent vectors for each class.</p>
+						<p>Input is array of images $[X]$ and array of class labels $[c]$. We group images by class labels to produce dictionary $\{X\}$,
+							containing array of images $[X_c]$ for each class. For each of these arrays, we compute the mean latent vector encoding, and store
+							it in dictionary $\{z\}$.</p>
 					</div>
 				</div>
 				<div class="panel panel-default" style="margin: 1rem;">
 					<div class="panel-heading">
-						<b>classification evaluation definition</b>
+						<b>class_means evaluation definition</b>
 					</div>
 					<div class="panel-body">
-						<p><b>input:</b> images $[X]$, class mean vectors $\{z_\mu\}$</b></p>
-						<p><b>var</b> $[c]$<b>;</b></p>
-						<p><b>for</b> $[X]_i$ <b>in</b> $[X]$:</p>
-						<p>&emsp;$[\overline{X}]_i = dec(enc([X]_i))$
-						<p>&emsp;$[c]_i = argmin([cross\_entropy([\overline{X}]_i, dec(\{z_\mu\}_j))$ <b>for</b> $\{z_\mu\}_j)$ <b>in</b> $\{z_\mu\}])$</p>
+						<p><b>input:</b> images $[X]$, class mean vectors $\{z\}$</p>
+						<p><b>var $[c]$;</b></p>
+						<p><b>for</b> $X_i$ <b>in</b> $[X]$:</p>
+						<p>&emsp;$\overline{X}_i = dec(enc(X_i))$</p>
+						<p>&emsp;$dists = [cross\_entropy(\overline{X}_i, dec(\{z\}_c))$<b> for $\{z\}_c$ in $\{z\}]$</b></p>
+						<p>&emsp;$[c]_i = argmin(dists)$</p>
 						<p><b>output:</b> predicted classes $[c]$</p>
 					</div>
 					<div class="panel-footer">
-						<p>Given input images $X$ and class mean vectors $\{z_\mu\}$, for each input image $[X]_i$, compute the encoding-decoding reconstruction
-							$[\overline{X}]_i$. Compute cross entropy between this reconstruction to the decoding of each mean vector $dec(\{z_\mu\}_j)$. Assign the
-							minimum as the predicted class.</p>
+						<p>Input is array of images $[X]$ and class mean vectors (from training) $\{z\}$. For each image $X_i$, we first compute the reconstruction of
+							that image, $\overline{X}_i$. We then compute the cross entropy between this image and the decoding of each mean vector $\{z\}_c$ in $\{z\}$.
+							We then assign the index of minimum cross entropy as the predicted class for this image.</p>
 					</div>
 				</div>
 				<p>Cross entropy between output image reconstructions is used as a similarity metric, rather than distance or cosine similarity between latent encodings,
 					in order to provide consistency in evaluation between this model and other baselines, described ahead.</p>
+				<h4>One_hot model</h4>
+				<p>We will also evaluate a simplified model which we will call <b>one_hot</b>. This model eliminates the pretraining step by, in the
+					previous VAE model, replacing the encoder	network with two simple perception layers that produce $z_\mu$ and $z_\sigma$, as shown
+					below. The random sampling, decoder, and loss function remain the same. The original image $X$ must be provided as auxiliary input during
+					training in order to compute the reconstruction loss of $\overline{X}$.</p>
+				<figure class="figure">
+					<img src="one_hot.png" style="width: 90%; padding: 1.5rem;">
+					<figcaption class="figure-caption">Simplified model definition</figcaption>
+				</figure>
+				<p>This model essentially combines pretraining and training into one step. The <b>one_hot training definition</b> for this model
+					would thus be simply training the network, with one_hot class encoding $c$ and target image $X$ as input. Evaluation would then
+					be as follows.</p>
+				<div class="panel panel-default" style="margin: 1rem;">
+					<div class="panel-heading">
+						<b>one_hot evaluation definition</b>
+					</div>
+					<div class="panel-body">
+						<p><b>input:</b> images $[X]$, target classes $[y]$</p>
+						<p><b>$[\overline{y}] = [dec(enc([y]_i))$ for $[y]_i$ in $[y]]$</b></p>
+						<p><b>var $[c]$;</b></p>
+						<p><b>for $[X]_i$ in $[X]$:</b></p>
+						<p>&emsp;<b>$dists = [cross\_entropy([X]_i, [\overline{y}]_j)$ for $[\overline{y}]_j$ in $[\overline{y}]]$</b></p>
+						<p>&emsp;$[c]_i = argmin(dists)$</p>
+						<p><b>output:</b> predicted classes $[c]$</p>
+					</div>
+					<div class="panel-footer">
+						<p>Input is images $[X]$ and target classes (all possible one-hot vectors across length of classes) $[y]$.
+							Reconstruct each class to produce array of reconstructions $[\overline{y}]$. For each input image $[X]_i$,
+							compute the cross entropy between this image and each class reconstruction $[\overline{y}]_j$. Assign the
+							index of minimum cross entropy as the predicted class for this image.</p>
+					</div>
+				</div>
+				<h4>Na&#239;ve model</h4>
+				<p>Finally, we will evaluate a na&#239;ive model that simply stores every example that's been seen, and compares
+					new examples to those that have been seen before to determine the most likely class.</p>
 			</div>
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
 			<div class="blog-post">
 				<h2 class="blog-post-title">Theoretical Foundations</h2>
 				<p class="blog-post-meta">18 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
@@ -217,6 +260,9 @@ h1, h2, h3, h4, h5, h7 {
 					<i>context</i>. This is motivated by human cognition, by which the world is perceived before being categorized, and examples can vary by how <i>well</i>
 					they represent a category.</p>
 			</div>
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
       <div class="blog-post">
         <h2 class="blog-post-title">Beginnings</h2>
         <p class="blog-post-meta">09 May 2018 by <a href="http://dylanebert.de">Dylan Ebert</a></p>
@@ -281,6 +327,9 @@ h1, h2, h3, h4, h5, h7 {
 				remain to be explored.</p>
 				<p>Thanks for reading!</p>
       </div>
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
+			<!----------------------------------------------------------------------------------->
     </div>
     <div class="col-sm-3 offset-sm-1 blog-sidebar">
       <div class="sidebar-module sidebar-module-inset">
